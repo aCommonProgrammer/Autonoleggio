@@ -1,5 +1,5 @@
 #include <iostream>
-#include <list>
+#include <vector>
 #include <fstream>
 
 using namespace std;
@@ -10,32 +10,33 @@ struct macchina
     char lunedi, martedi, mercoledi, giovedi, venerdi, sabato, domenica;
 };
 
-void leggi_csv_auto(list<macchina> lista_macchine);
+void leggi_csv_auto(vector<macchina> &vet_macchine);
 void stampa_csv_auto();
-void stampa_lista(list<macchina> lista_macchine);
+void stampa_lista(vector<macchina> &vet_macchine);
 
 int main()
 {
-    list<macchina> lista_macchine;
+    vector<macchina> vet_macchine;
+    macchina* bottom;
     cout<<"Il programma gestisce le prenotazioni in un autonoleggio di un'auto per una settimana"
         "\nda luned"<<(char) 141<<" a domenica, nell'ipotesi che una macchina possa essere affittata solo per"
         "\ngiornate intere e non spezzoni di giornata.\n";
     system("timeout 10");
     system("cls");
-    leggi_csv_auto(lista_macchine);
-    stampa_lista(lista_macchine);
+    leggi_csv_auto(vet_macchine);
+    stampa_lista(vet_macchine);
 
 
     return 0;
 }
 
-void leggi_csv_auto(list<macchina> lista_macchine)
+void leggi_csv_auto(vector<macchina> &vet_macchine)
 {
     fstream fin("auto.csv");
     string s;
+    getline(fin, s);
+    getline(fin, s);
     macchina appoggio;
-    getline(fin, s);
-    getline(fin, s);
     while (!fin.eof())
     {
         getline(fin, appoggio.categoria, ',');
@@ -57,21 +58,22 @@ void leggi_csv_auto(list<macchina> lista_macchine)
         appoggio.venerdi = s.at(1);
         getline(fin, s, ',');
         appoggio.sabato = s.at(1);
-        getline(fin, s, ',');
+        getline(fin, s, '\n');
         appoggio.domenica = s.at(1);
 
-        lista_macchine.push_front(appoggio);
+        vet_macchine.push_back(appoggio);
+
+
     }
 }
 
-void stampa_lista(list<macchina> lista_macchine)
+void stampa_lista(vector<macchina>& vet_macchine)
 {
-    cout<<"Categoria, Marca, Modello, Colore, Luned"<<(char) 141<<", Marted"<<(char) 141<<", Mercoled"<<(char) 141<<", Gioved"<<(char) 141<<", Venerd"<<(char) 141<<", Sabato, Domenica";
+    cout<<"Categoria, Marca, Modello, Colore, Luned"<<(char) 141<<", Marted"<<(char) 141<<", Mercoled"<<(char) 141<<", Gioved"<<(char) 141<<", Venerd"<<(char) 141<<", Sabato, Domenica"<<endl;
     macchina appoggio;
-    for (int c=lista_macchine.size(); c>0; c++)
+    for(int c=0; c<vet_macchine.size();c++)
     {
-        appoggio = lista_macchine.front();
-        cout<<appoggio.categoria<<','<<appoggio.marca<<','<<','<<appoggio.modello<<','<<appoggio.colore<<','<<appoggio.lunedi<<','<<appoggio.martedi<<','<<appoggio.mercoledi<<','<<appoggio.giovedi<<','<<appoggio.venerdi<<','<<appoggio.sabato<<','<<appoggio.domenica;
+        cout<<vet_macchine[c].categoria<<','<<vet_macchine[c].marca<<','<<vet_macchine[c].modello<<','<<vet_macchine[c].colore<<','<<vet_macchine[c].lunedi<<','<<vet_macchine[c].martedi<<','<<vet_macchine[c].mercoledi<<','<<vet_macchine[c].giovedi<<','<<vet_macchine[c].venerdi<<','<<vet_macchine[c].sabato<<','<<vet_macchine[c].domenica<<endl;
     }
 }
 
