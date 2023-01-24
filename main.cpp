@@ -13,6 +13,8 @@ struct macchina
 void leggi_csv_auto(vector<macchina> &vet_macchine);
 void suddivisione_stringa_ricerca(string &categoria,char &lun,char &mar,char &mer,char &gio,char &ven,char &sab,char &dom, string s);
 vector<int> ricerca_auto_disponibili(vector<macchina> vet_macchine,string categoria,char lun,char mar,char mer,char gio,char ven,char sab,char dom);
+vector<macchina> modifica_vet(int key, vector<macchina> vet_macchine,char lun,char mar,char mer,char gio,char ven,char sab,char dom);
+void modifica_csv(vector<macchina> vet_macchine);
 void stampa_lista(vector<macchina> &vet_macchine);
 void stampa_csv_auto();
 
@@ -30,6 +32,7 @@ int main()
     system("cls");
     string s;
     cout<<"Inserire i dati dell'auto secondo il formato: \"categoria n_giorno\" (i giorni sono codificati così: 1=luned"<<(char) 141<<", 2=marted"<<(char) 141<<"..., 7=domenica) \n";
+    cin.ignore();
     getline(cin, s);
 
     string categoria;
@@ -38,13 +41,30 @@ int main()
 
     vector<int> key = ricerca_auto_disponibili(vet_macchine,categoria,lun,mar,mer,gio,ven,sab,dom);
 
-   /* if (key.size() > 0)
-    {
+    system("cls");
 
+    if (key.size() > 0)
+    {
+        cout<<"Le macchine disponibili sono:\n";
+        for(int c=0; c<key.size(); c++)
+            cout<<c+1<<(char) -8<<'-'<<vet_macchine[key[c]].marca<<", "<<vet_macchine[key[c]].modello<<", "<<vet_macchine[key[c]].colore<<endl;
+        int scelta;
+        cout<<"Inserire il numero dell'auto da prenotare: "; cin>>scelta; scelta--;
+        modifica_csv(modifica_vet(key[scelta], vet_macchine, lun, mar, mer, gio, ven, sab, dom));
     }
     else
-        cout<<"Non "<<(char) 138<<" stat trovata nessuna macchina con i requisiti richiesti";*/
+    {
+        cout<<"Non "<<(char) 138<<" stata trovata nessuna macchina con i requisiti richiesti\n";
+        system("pause");
 
+    }
+
+    system("cls");
+    cout<<"Il file testuale ora si presenta in questo modo:\n\n";
+    stampa_csv_auto();
+    system("pause");
+    cout<<"Il vettore del programma ora si presenta in questo modo:\n\n";
+    stampa_lista(vet_macchine);
 
 
     return 0;
@@ -123,14 +143,39 @@ vector<int> ricerca_auto_disponibili(vector<macchina> vet_macchine,string catego
     return key;
 }
 
+vector<macchina> modifica_vet(int key, vector<macchina> vet_macchine,char lun,char mar,char mer,char gio,char ven,char sab,char dom)
+{
+    if(vet_macchine[key].lunedi != lun)
+        vet_macchine[key].lunedi = 'A';
+    if(vet_macchine[key].martedi != mar)
+        vet_macchine[key].martedi = 'A';
+    if(vet_macchine[key].mercoledi != mer)
+        vet_macchine[key].mercoledi = 'A';
+    if(vet_macchine[key].giovedi != gio)
+        vet_macchine[key].giovedi = 'A';
+    if(vet_macchine[key].venerdi != ven)
+        vet_macchine[key].venerdi = 'A';
+    if(vet_macchine[key].sabato != sab)
+        vet_macchine[key].sabato = 'A';
+    if(vet_macchine[key].domenica != dom)
+        vet_macchine[key].domenica = 'A';
+}
+
+void modifica_csv(vector<macchina> vet_macchine)
+{
+    ofstream fout("auto.csv");
+    fout<<"\nCategoria, Marca, Modello, Colore, Luned"<<(char) 141<<", Marted"<<(char) 141<<", Mercoled"<<(char) 141<<", Gioved"<<(char) 141<<", Venerdi, Sabato, Domenica\n";
+    for (int c=0; c< vet_macchine.size(); c++)
+        fout<<vet_macchine[c].categoria<<", "<<vet_macchine[c].marca<<", "<<vet_macchine[c].modello<<", "<<vet_macchine[c].colore<<", "<<vet_macchine[c].lunedi<<", "<<vet_macchine[c].martedi<<", "<<vet_macchine[c].mercoledi<<", "<<vet_macchine[c].giovedi<<", "<<vet_macchine[c].venerdi<<", "<<vet_macchine[c].sabato<<", "<<vet_macchine[c].domenica<<endl;
+
+}
+
 void stampa_lista(vector<macchina>& vet_macchine)
 {
-    cout<<"Categoria, Marca, Modello, Colore, Luned"<<(char) 141<<", Marted"<<(char) 141<<", Mercoled"<<(char) 141<<", Gioved"<<(char) 141<<", Venerd"<<(char) 141<<", Sabato, Domenica"<<endl;
+    cout<<"Categoria, Marca, Modello, Colore, Luned"<<(char) 141<<", Marted"<<(char) 141<<", Mercoled"<<(char) 141<<", Gioved"<<(char) 141<<", Venerd"<<(char) 141<<", Sabato, Domenica\n";
     macchina appoggio;
     for(int c=0; c<vet_macchine.size();c++)
-    {
-        cout<<vet_macchine[c].categoria<<','<<vet_macchine[c].marca<<','<<vet_macchine[c].modello<<','<<vet_macchine[c].colore<<','<<vet_macchine[c].lunedi<<','<<vet_macchine[c].martedi<<','<<vet_macchine[c].mercoledi<<','<<vet_macchine[c].giovedi<<','<<vet_macchine[c].venerdi<<','<<vet_macchine[c].sabato<<','<<vet_macchine[c].domenica<<endl;
-    }
+        cout<<vet_macchine[c].categoria<<", "<<vet_macchine[c].marca<<", "<<vet_macchine[c].modello<<", "<<vet_macchine[c].colore<<", "<<vet_macchine[c].lunedi<<", "<<vet_macchine[c].martedi<<", "<<vet_macchine[c].mercoledi<<", "<<vet_macchine[c].giovedi<<", "<<vet_macchine[c].venerdi<<", "<<vet_macchine[c].sabato<<", "<<vet_macchine[c].domenica<<endl;
 }
 
 void stampa_csv_auto()
