@@ -2,18 +2,20 @@
 #include <vector>
 #include <fstream>
 
+#define FILENAME "auto.csv"
+
 using namespace std;
 
 struct macchina
 {
     string categoria, marca, modello, colore;
-    char lunedi, martedi, mercoledi, giovedi, venerdi, sabato, domenica;
+    bool giorni_sett[7] = {false,false,false,false,false,false,false};
 };
 
 void leggi_csv_auto(vector<macchina> &vet_macchine);
-void suddivisione_stringa_ricerca(string &categoria,char &lun,char &mar,char &mer,char &gio,char &ven,char &sab,char &dom, string s);
-vector<int> ricerca_auto_disponibili(vector<macchina> vet_macchine,string categoria,char lun,char mar,char mer,char gio,char ven,char sab,char dom);
-vector<macchina> modifica_vet(int key, vector<macchina> vet_macchine,char lun,char mar,char mer,char gio,char ven,char sab,char dom);
+void suddivisione_stringa_ricerca(string &categoria,bool giorni_sett[], string s);
+void ricerca_auto_disponibili(vector<int>& key, vector<macchina> vet_macchine,string categoria,bool giorni_sett[]);
+vector<macchina> modifica_vet_key(int key, vector<macchina> vet_macchine,bool giorni_sett[]);
 void modifica_csv(vector<macchina> vet_macchine);
 void stampa_lista(vector<macchina> &vet_macchine);
 void stampa_csv_auto();
@@ -26,39 +28,46 @@ int main()
         "\ngiornate intere e non spezzoni di giornata.\n";
     system("timeout 10");
     leggi_csv_auto(vet_macchine);
+    system("pause");
     system("cls");
     cout<<"Se si desidera usare il programma ";
     system("pause");
-    system("cls");
-    string s;
-    cout<<"Inserire i dati dell'auto secondo il formato: \"categoria n_giorno\" (i giorni sono codificati così: 1=luned"<<(char) 141<<", 2=marted"<<(char) 141<<"..., 7=domenica) \n";
-    cin.ignore();
-    getline(cin, s);
+    bool ripetere = true;
+do{
+        system("cls");
+        string s;
+        cout<<"Inserire i dati dell'auto secondo il formato:\n \"categoria n_giorno\" (le categorie sono: utilitaria, media, lusso, sportiva e furgone; i giorni sono codificati così: 1=luned"<<(char) 141<<", 2=marted"<<(char) 141<<"..., 7=domenica)"<<(char) 25<<"\n";
+        cin.ignore();
+        getline(cin, s);
 
-    string categoria;
-    char lun, mar, mer, gio, ven, sab, dom;
-    suddivisione_stringa_ricerca(categoria,lun,mar,mer,gio,ven,sab,dom,s);
+        string categoria;
+        bool giorni_sett[7] = {false,false,false,false,false,false,false};
+        suddivisione_stringa_ricerca(categoria,giorni_sett,s);
 
-    vector<int> key = ricerca_auto_disponibili(vet_macchine,categoria,lun,mar,mer,gio,ven,sab,dom);
+        vector<int> key;
+        ricerca_auto_disponibili(key, vet_macchine,categoria,giorni_sett);
 
-    system("cls");
+        system("cls");
 
-    if (key.size() > 0)
-    {
-        cout<<"Le macchine disponibili sono:\n";
-        for(int c=0; c<key.size(); c++)
-            cout<<c+1<<(char) -8<<'-'<<vet_macchine[key[c]].marca<<", "<<vet_macchine[key[c]].modello<<", "<<vet_macchine[key[c]].colore<<endl;
-        int scelta;
-        cout<<"Inserire il numero dell'auto da prenotare: "; cin>>scelta; scelta--;
-        modifica_csv(modifica_vet(key[scelta], vet_macchine, lun, mar, mer, gio, ven, sab, dom));
-    }
-    else
-    {
-        cout<<"Non "<<(char) 138<<" stata trovata nessuna macchina con i requisiti richiesti\n";
-        system("pause");
-
-    }
-
+        if (key.size() > 0)
+        {
+            cout<<"Le macchine disponibili sono:\n";
+            for(int c=0; c<key.size(); c++)
+                cout<<c+1<<(char) -8<<'-'<<vet_macchine[key[c]].marca<<", "<<vet_macchine[key[c]].modello<<", "<<vet_macchine[key[c]].colore<<endl;
+            int scelta;
+            cout<<"Inserire il numero dell'auto da prenotare: "; cin>>scelta; scelta--;
+            modifica_csv(modifica_vet_key(key[scelta], vet_macchine, giorni_sett));
+            ripetere = false;
+        }
+        else
+        {
+            cout<<"Non "<<(char) 138<<" stata trovata nessuna macchina con i requisiti richiesti\n";
+            string r;
+            cout<<"Cercare di nuovo? "; cin>>r;
+            if (r!="si" && r!="SI" && r!="Si")
+                ripetere = false;
+        }
+    }while(ripetere);
     system("cls");
     cout<<"Il file testuale ora si presenta in questo modo:\n\n";
     stampa_csv_auto();
@@ -72,12 +81,12 @@ int main()
 
 void leggi_csv_auto(vector<macchina> &vet_macchine)
 {
-    fstream fin("auto.csv");
+    ifstream fin(FILENAME);
     string s;
     getline(fin, s);
     getline(fin, s);
     macchina appoggio;
-    while (!fin.eof())
+    while (fin)
     {
         getline(fin, appoggio.categoria, ',');
         getline(fin, appoggio.marca, ',');
@@ -86,88 +95,67 @@ void leggi_csv_auto(vector<macchina> &vet_macchine)
         appoggio.modello.erase(0,1);
         getline(fin, appoggio.colore, ',');
         appoggio.colore.erase(0,1);
-        getline(fin, s, ',');
-        appoggio.lunedi = s.at(1);
-        getline(fin, s, ',');
-        appoggio.martedi = s.at(1);
-        getline(fin, s, ',');
-        appoggio.mercoledi = s.at(1);
-        getline(fin, s, ',');
-        appoggio.giovedi = s.at(1);
-        getline(fin, s, ',');
-        appoggio.venerdi = s.at(1);
-        getline(fin, s, ',');
-        appoggio.sabato = s.at(1);
+        for(int c=0; c<6; c++)
+        {
+            getline(fin, s, ',');
+            if (s == " L") appoggio.giorni_sett[c] = 0;
+            else appoggio.giorni_sett[c] = 1;
+            cout<<"\""<<s<<"\""<<endl;
+        }
         getline(fin, s);
-        appoggio.domenica = s.at(1);
-
+        if (s.at(1) == 'L') appoggio.giorni_sett[6] = 0;
+        else appoggio.giorni_sett[6] = 1;
+        cout<<"\""<<s<<"\""<<endl;
         vet_macchine.push_back(appoggio);
     }
     fin.close();
 }
 
-void suddivisione_stringa_ricerca(string &categoria,char &lun,char &mar,char &mer,char &gio,char &ven,char &sab,char &dom, string s)
+void suddivisione_stringa_ricerca(string &categoria, bool giorni_sett[], string s)
 {
     categoria = "";
-    lun='L'; mar='L'; mer='L'; gio='L'; ven='L'; sab='L'; dom='L';
-
     int c;
     for( c=0;c<s.length() && s.at(c) != ' ' ; c++)
         categoria +=  s.at(c);
     for(c++; c<s.length(); c++)
-        switch (s.at(c))
+        if (s.at(c) >= 48 && s.at(c) <= 57)
+            giorni_sett[(int) s.at(c) - 49] = true;
+}
+
+void ricerca_auto_disponibili(vector<int> &key,vector<macchina> vet_macchine,string categoria,bool giorni_sett[])
+{
+    for(int c=0; c<vet_macchine.size(); c++)
+        if(vet_macchine[c].categoria == categoria)
         {
-        case '1': lun = 'A';
-                  break;
-        case '2': mar = 'A';
-                  break;
-        case '3': mer = 'A';
-                  break;
-        case '4': gio = 'A';
-                  break;
-        case '5': ven = 'A';
-                  break;
-        case '6': sab = 'A';
-                  break;
-        case '7': dom = 'A';
+            for (int i=0; i<7 ;i++)
+                if(vet_macchine[c].giorni_sett[i] == giorni_sett[i] && vet_macchine[c].giorni_sett[i])
+                    goto salta;
+            key.push_back(c);
+        salta:
+            c=c;
         }
 }
 
-vector<int> ricerca_auto_disponibili(vector<macchina> vet_macchine,string categoria,char lun,char mar,char mer,char gio,char ven,char sab,char dom)
+vector<macchina> modifica_vet_key(int key, vector<macchina> vet_macchine,bool giorni_sett[])
 {
-    vector<int> key;
-    for(int c=0; c<vet_macchine.size(); c++)
-        if(vet_macchine[c].categoria == categoria && vet_macchine[c].lunedi == lun && vet_macchine[c].martedi == mar && vet_macchine[c].mercoledi == mer && vet_macchine[c].giovedi == gio && vet_macchine[c].venerdi == ven && vet_macchine[c].sabato == sab && vet_macchine[c].domenica == dom)
-            key.push_back(c);
-
-    return key;
-}
-
-vector<macchina> modifica_vet(int key, vector<macchina> vet_macchine,char lun,char mar,char mer,char gio,char ven,char sab,char dom)
-{
-    if(vet_macchine[key].lunedi != lun)
-        vet_macchine[key].lunedi = 'A';
-    if(vet_macchine[key].martedi != mar)
-        vet_macchine[key].martedi = 'A';
-    if(vet_macchine[key].mercoledi != mer)
-        vet_macchine[key].mercoledi = 'A';
-    if(vet_macchine[key].giovedi != gio)
-        vet_macchine[key].giovedi = 'A';
-    if(vet_macchine[key].venerdi != ven)
-        vet_macchine[key].venerdi = 'A';
-    if(vet_macchine[key].sabato != sab)
-        vet_macchine[key].sabato = 'A';
-    if(vet_macchine[key].domenica != dom)
-        vet_macchine[key].domenica = 'A';
+    for (int c=0; c<7 ;c++)
+        vet_macchine[key].giorni_sett[c] = vet_macchine[key].giorni_sett[c] | giorni_sett[c];
+    return vet_macchine;
 }
 
 void modifica_csv(vector<macchina> vet_macchine)
 {
-    ofstream fout("auto.csv");
+    ofstream fout(FILENAME);
     fout<<"\nCategoria, Marca, Modello, Colore, Luned"<<(char) 141<<", Marted"<<(char) 141<<", Mercoled"<<(char) 141<<", Gioved"<<(char) 141<<", Venerdi, Sabato, Domenica\n";
     for (int c=0; c< vet_macchine.size(); c++)
-        fout<<vet_macchine[c].categoria<<", "<<vet_macchine[c].marca<<", "<<vet_macchine[c].modello<<", "<<vet_macchine[c].colore<<", "<<vet_macchine[c].lunedi<<", "<<vet_macchine[c].martedi<<", "<<vet_macchine[c].mercoledi<<", "<<vet_macchine[c].giovedi<<", "<<vet_macchine[c].venerdi<<", "<<vet_macchine[c].sabato<<", "<<vet_macchine[c].domenica<<endl;
-
+    {
+        fout<<vet_macchine[c].categoria<<", "<<vet_macchine[c].marca<<", "<<vet_macchine[c].modello<<", "<<vet_macchine[c].colore<<", ";
+        for (int i=0;i<7;i++)
+            if(vet_macchine[c].giorni_sett[i]) fout<<"A";
+            else fout<<"L";
+        fout<<endl;
+    }
+    fout.close();
 }
 
 void stampa_lista(vector<macchina>& vet_macchine)
@@ -175,12 +163,18 @@ void stampa_lista(vector<macchina>& vet_macchine)
     cout<<"Categoria, Marca, Modello, Colore, Luned"<<(char) 141<<", Marted"<<(char) 141<<", Mercoled"<<(char) 141<<", Gioved"<<(char) 141<<", Venerd"<<(char) 141<<", Sabato, Domenica\n";
     macchina appoggio;
     for(int c=0; c<vet_macchine.size();c++)
-        cout<<vet_macchine[c].categoria<<", "<<vet_macchine[c].marca<<", "<<vet_macchine[c].modello<<", "<<vet_macchine[c].colore<<", "<<vet_macchine[c].lunedi<<", "<<vet_macchine[c].martedi<<", "<<vet_macchine[c].mercoledi<<", "<<vet_macchine[c].giovedi<<", "<<vet_macchine[c].venerdi<<", "<<vet_macchine[c].sabato<<", "<<vet_macchine[c].domenica<<endl;
+    {
+        cout<<vet_macchine[c].categoria<<", "<<vet_macchine[c].marca<<", "<<vet_macchine[c].modello<<", "<<vet_macchine[c].colore<<", ";
+        for (int i=0;i<7;i++)
+            if(vet_macchine[c].giorni_sett[i]) cout<<"A";
+            else cout<<"L";
+        cout<<endl;
+    }
 }
 
 void stampa_csv_auto()
 {
-    fstream fin("auto.csv");
+    ifstream fin(FILENAME);
     string s;
     while (!fin.eof())
     {
